@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vee_Zee — Online Food Ordering</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Background Blobs -->
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Auth Modal -->
+    <div class="modal-backdrop" id="auth-modal">
+        <div class="modal-box" style="max-width:440px;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold" id="auth-title">Sign In</h3>
+                <button class="btn-ghost text-xl" onclick="closeModal('auth-modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex gap-2 mb-6">
+                <button class="cat-pill active flex-1 text-center" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+                <button class="cat-pill flex-1 text-center" id="tab-register" onclick="switchAuthTab('register')">Register</button>
+            </div>
+            <form id="auth-form" onsubmit="handleAuth(event)">
+                <div id="register-fields" class="hidden">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Full Name</label>
+                        <input type="text" name="name" class="input-field" placeholder="Your name" id="reg-name">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Email</label>
+                    <input type="email" name="email" class="input-field" placeholder="you@example.com" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Password</label>
+                    <input type="password" name="password" class="input-field" placeholder="Enter password" required>
+                </div>
+                <div id="register-phone" class="hidden mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Phone (optional)</label>
+                    <input type="text" name="phone" class="input-field" placeholder="855XXXXXXXX" id="reg-phone">
+                </div>
+               
+                            <button type="submit" class="btn-accent w-full py-3 rounded-xl text-base mt-2" id="auth-submit-btn">Sign In</button>
+            </form>
+            
+         
+                        <!-- ប៉ុន្តាល់ Google Login -->
+            <div class="my-4 flex items-center gap-3">
+                <div class="flex-1 h-px" style="background:var(--border)"></div>
+                <span class="text-xs" style="color:var(--muted)">OR</span>
+                <div class="flex-1 h-px" style="background:var(--border)"></div>
+            </div>
+            <button type="button" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-sm font-medium mb-3" 
+                    style="background:#fff;color:#333;border:1px solid #ddd;" 
+                    onclick="loginWithGoogle()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66-2.84c.87-2.6 1.35-5.39 1.35-8.23 0-1.19-.14-2.35-.39-3.46H12z" fill="#EA4335"/></svg>
+                Continue with Google
+            </button>
+
+            <!-- Facebook Login ថ្មី -->
+            <button type="button" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white" 
+                    style="background:#1877F2;" 
+                    onclick="loginWithFacebook()">
+                <i class="fa-brands fa-facebook-f text-lg"></i>
+                Continue with Facebook
+            </button>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal-backdrop" id="edit-profile-modal">
+        <div class="modal-box" style="max-width:480px;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Edit Profile</h3>
+                <button class="btn-ghost text-xl" onclick="closeModal('edit-profile-modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="edit-profile-form" onsubmit="handleUpdateProfile(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Full Name</label>
+                    <input type="text" id="profile-edit-name" class="input-field" placeholder="Your name" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Email</label>
+                    <input type="email" id="profile-edit-email" class="input-field" placeholder="you@example.com" disabled style="opacity:0.6;cursor:not-allowed;">
+                    <p class="text-xs mt-1" style="color:var(--muted)">Email cannot be changed</p>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Phone Number</label>
+                    <input type="text" id="profile-edit-phone" class="input-field" placeholder="855XXXXXXXX">
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-accent px-6 py-2.5 rounded-xl text-sm flex-1">
+                        <i class="fa-solid fa-check mr-2"></i>Save Changes
+                    </button>
+                    <button type="button" class="btn-outline px-6 py-2.5 rounded-xl text-sm" onclick="closeModal('edit-profile-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-backdrop" id="change-password-modal">
+        <div class="modal-box" style="max-width:440px;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Change Password</h3>
+                <button class="btn-ghost text-xl" onclick="closeModal('change-password-modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="change-password-form" onsubmit="handleChangePassword(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Current Password</label>
+                    <input type="password" id="current-password" class="input-field" placeholder="Enter current password" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">New Password</label>
+                    <input type="password" id="new-password" class="input-field" placeholder="Enter new password" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Confirm New Password</label>
+                    <input type="password" id="confirm-new-password" class="input-field" placeholder="Confirm new password" required>
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-accent px-6 py-2.5 rounded-xl text-sm flex-1">
+                        <i class="fa-solid fa-key mr-2"></i>Update Password
+                    </button>
+                    <button type="button" class="btn-outline px-6 py-2.5 rounded-xl text-sm" onclick="closeModal('change-password-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="qr-modal">
+        <div class="modal-box text-center" style="max-width:400px;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">QR Payment</h3>
+                <!-- កែប៉ុន្ត X នេះ -->
+                <button class="btn-ghost text-xl" onclick="cancelPaymentAndClose()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="qr-loading" class="py-8">
+                <div class="spinner mx-auto mb-4"></div>
+                <p style="color:var(--fg-secondary)">Generating QR Code...</p>
+            </div>
+            <div id="qr-content" class="hidden">
+                <div class="rounded-xl overflow-hidden inline-block mb-4" style="border:2px solid var(--border)">
+                    <img id="qr-image" src="" alt="Payment QR Code" style="width:240px;height:240px;object-fit:contain;background:#fff;">
+                </div>
+                <p class="text-2xl font-bold mb-1" id="qr-amount" style="color:var(--accent)"></p>
+                <p class="text-sm mb-6" style="color:var(--muted)">Scan with Bakong or banking app</p>
+                
+                <div class="p-4 rounded-xl mb-4" style="background:rgba(232,119,46,0.1); border: 1px solid rgba(232,119,46,0.2);">
+                    <p class="text-sm font-medium" style="color:var(--accent)"><i class="fa-solid fa-clock mr-2"></i>សូមរង់ចាំបន្តិច...</p>
+                    <p class="text-xs mt-1" style="color:var(--fg-secondary)">ការបញ្ជាទិញនឹងត្រូវបានបញ្ជាក់ដោយប្រព័ន្ធដោយស្វ័យប្រវត្តិ។</p>
+                </div>
+                
+                <!-- កែប៉ុន្ត "បិទ" នេះ -->
+                <button class="btn-outline w-full py-3 rounded-xl text-sm" onclick="cancelPaymentAndClose()">
+                    <i class="fa-solid fa-xmark mr-2"></i>បិទ និងបោះបង់ការបញ្ជាទិញ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal with Map -->
+    <div class="modal-backdrop" id="checkout-modal">
+        <div class="modal-box" style="max-width:560px;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Checkout</h3>
+                <button class="btn-ghost text-xl" onclick="closeModal('checkout-modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleCheckout(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">
+                        <i class="fa-solid fa-map-location-dot mr-1" style="color:var(--accent)"></i>
+                        Delivery Location (Click map or search)
+                    </label>
+                    <div class="relative mb-2">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 z-10" style="color:var(--muted)"></i>
+                        <input type="text" id="map-search" class="input-field pl-11" placeholder="Search street, building, area..." oninput="debounceSearchLocation()" autocomplete="off">
+                        <div class="map-search-results" id="map-search-results"></div>
+                    </div>
+                    <div id="checkout-map"></div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Exact Address / Floor / Room</label>
+                    <textarea name="address" id="checkout-address" class="input-field" rows="2" placeholder="House number, floor, room details..." required></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Phone Number</label>
+                    <input type="text" name="phone" class="input-field" placeholder="855XXXXXXXX" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Notes (optional)</label>
+                    <input type="text" name="notes" class="input-field" placeholder="Extra spicy, no onions...">
+                </div>
+                <div class="flex justify-between items-center mb-6 py-4" style="border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+                    <span class="font-semibold">Total</span>
+                    <span class="text-2xl font-bold" style="color:var(--accent)" id="checkout-total">$0.00</span>
+                </div>
+                <button type="submit" class="btn-accent w-full py-3 rounded-xl text-base">
+                    <i class="fa-solid fa-paper-plane mr-2"></i>Place Order
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Food Item Modal -->
+    <div class="modal-backdrop" id="edit-item-modal">
+        <div class="modal-box modal-box-lg">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold" id="edit-item-title">Edit Item</h3>
+                <button class="btn-ghost text-xl" onclick="closeModal('edit-item-modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="edit-item-form" onsubmit="saveEditItem(event)">
+                <input type="hidden" id="edit-item-id">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <div id="edit-item-preview-container" class="mb-4">
+                            <img id="edit-item-preview" class="img-preview" style="display:none" onerror="this.style.display='none';document.getElementById('edit-item-placeholder').style.display='flex'">
+                            <div id="edit-item-placeholder" class="img-preview-placeholder">
+                                <i class="fa-solid fa-image text-3xl mb-2"></i>
+                                <span class="text-sm">Image Preview</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Name *</label>
+                        <input type="text" id="edit-item-name" class="input-field" placeholder="Dish name" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Price ($) *</label>
+                        <input type="number" id="edit-item-price" class="input-field" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Category *</label>
+                        <select id="edit-item-cat" class="input-field" required></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Image URL</label>
+                        <input type="text" id="edit-item-img" class="input-field" placeholder="https://..." oninput="updateEditImagePreview()">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Description</label>
+                        <textarea id="edit-item-desc" class="input-field" rows="3" placeholder="Describe the dish..."></textarea>
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="edit-item-available" class="w-5 h-5 rounded" style="accent-color:var(--accent)">
+                            <span class="text-sm font-medium">Available on menu</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn-accent px-6 py-2.5 rounded-xl text-sm flex-1">
+                        <i class="fa-solid fa-check mr-2"></i>Save Changes
+                    </button>
+                    <button type="button" class="btn-outline px-6 py-2.5 rounded-xl text-sm" onclick="closeModal('edit-item-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Food Item Modal -->
+    <div class="modal-backdrop" id="add-item-modal">
+        <div class="modal-box modal-box-lg">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Add New Item</h3>
+                <button class="btn-ghost text-xl" onclick="closeModal('add-item-modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="add-item-form" onsubmit="addNewItem(event)">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <div id="add-item-preview-container" class="mb-4">
+                            <img id="add-item-preview" class="img-preview" style="display:none" onerror="this.style.display='none';document.getElementById('add-item-placeholder').style.display='flex'">
+                            <div id="add-item-placeholder" class="img-preview-placeholder">
+                                <i class="fa-solid fa-image text-3xl mb-2"></i>
+                                <span class="text-sm">Image Preview</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Name *</label>
+                        <input type="text" id="new-item-name" class="input-field" placeholder="Dish name" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Price ($) *</label>
+                        <input type="number" id="new-item-price" class="input-field" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Category *</label>
+                        <select id="new-item-cat" class="input-field" required></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Image URL</label>
+                        <input type="text" id="new-item-img" class="input-field" placeholder="https://..." oninput="updateAddImagePreview()">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-2" style="color:var(--fg-secondary)">Description</label>
+                        <textarea id="new-item-desc" class="input-field" rows="3" placeholder="Describe the dish..."></textarea>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn-accent px-6 py-2.5 rounded-xl text-sm flex-1">
+                        <i class="fa-solid fa-plus mr-2"></i>Add Item
+                    </button>
+                    <button type="button" class="btn-outline px-6 py-2.5 rounded-xl text-sm" onclick="closeModal('add-item-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Dialog -->
+    <div class="modal-backdrop" id="confirm-modal">
+        <div class="modal-box" style="max-width:400px;">
+            <div class="confirm-dialog">
+                <div class="confirm-icon" id="confirm-icon">
+                    <i class="fa-solid fa-trash-can"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2" id="confirm-title">Delete Item?</h3>
+                <p class="text-sm mb-6" style="color:var(--fg-secondary)" id="confirm-message">This action cannot be undone.</p>
+                <div class="flex gap-3">
+                    <button class="btn-danger px-6 py-2.5 rounded-xl text-sm flex-1" id="confirm-btn">Delete</button>
+                    <button class="btn-outline px-6 py-2.5 rounded-xl text-sm flex-1" onclick="closeModal('confirm-modal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Order Detail Modal -->
+    <div class="modal-backdrop" id="admin-order-modal">
+        <div class="modal-box modal-box-xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold" id="admin-order-title">Order Details</h3>
+                <button class="btn-ghost text-xl" onclick="closeModal('admin-order-modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="admin-order-content"></div>
+        </div>
+    </div>
+
+    <!-- Order Success Modal -->
+    <div class="modal-backdrop" id="order-success-modal">
+        <div class="modal-box text-center" style="max-width:460px;">
+            <div id="order-success-content"></div>
+        </div>
+    </div>
+
+    <!-- Cart Overlay -->
+    <div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
+
+    <!-- Cart Panel -->
+    <div class="cart-panel" id="cart-panel">
+        <div class="flex items-center justify-between p-6" style="border-bottom:1px solid var(--border)">
+            <h3 class="text-lg font-bold">Your Cart</h3>
+            <button class="btn-ghost text-xl" onclick="closeCart()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6" id="cart-items"></div>
+        <div class="p-6" style="border-top:1px solid var(--border)">
+            <div class="flex justify-between mb-2">
+                <span style="color:var(--fg-secondary)">Subtotal</span>
+                <span id="cart-subtotal" class="font-medium">$0.00</span>
+            </div>
+            <div class="flex justify-between mb-4">
+                <span style="color:var(--fg-secondary)">Delivery</span>
+                <span class="font-medium" style="color:var(--success)">Free</span>
+            </div>
+            <div class="flex justify-between mb-6 pt-3" style="border-top:1px solid var(--border)">
+                <span class="font-bold text-lg">Total</span>
+                <span class="font-bold text-lg" style="color:var(--accent)" id="cart-total">$0.00</span>
+            </div>
+            <button class="btn-accent w-full py-3 rounded-xl text-base" onclick="openCheckoutModal()">
+                Proceed to Checkout
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-glass fixed top-0 left-0 right-0 z-50" id="main-nav">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="#" onclick="navigate(state.user && state.user.role === 'admin' ? 'admin' : 'menu');return false" class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white text-sm" style="background:var(--accent)">V</div>
+                    <span class="font-bold text-lg" style="font-family:'Outfit'">Vee_Zee</span>
+                </a>
+                <div class="hidden md:flex items-center gap-1" id="nav-links"></div>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Notification Bell -->
+                <div class="notif-bell relative btn-ghost text-xl p-2 hidden" id="notif-bell-btn" onclick="toggleNotifDropdown(event)">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notif-badge hidden" id="notif-badge">0</span>
+                </div>
+
+                <!-- Cart Button (hidden for admin) -->
+                <button class="relative btn-ghost text-xl p-2" onclick="openCart()" id="cart-icon-btn">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center text-white hidden" id="cart-badge" style="background:var(--accent);font-size:10px;">0</span>
+                </button>
+
+                <!-- User -->
+                <div id="nav-user"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-16 relative z-10 flex-1" id="main-content"></main>
+
+    <!-- Footer -->
+    <footer class="site-footer" id="site-footer">
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="md:col-span-2">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white" style="background:var(--accent)">V</div>
+                        <span class="text-xl font-bold" style="font-family:'Outfit'">Vee_Zee</span>
+                    </div>
+                    <p class="text-sm leading-relaxed max-w-sm" style="color:var(--fg-secondary)">
+                        Fresh food delivered fast to your door. Experience the best of Cambodian cuisine and international dishes with our seamless online ordering system.
+                    </p>
+                    <div class="flex gap-3 mt-6">
+                        <a href="https://facebook.com" target="_blank" class="social-icon" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://t.me" target="_blank" class="social-icon" title="Telegram"><i class="fa-brands fa-telegram-plane"></i></a>
+                        <a href="https://instagram.com" target="_blank" class="social-icon" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="https://tiktok.com" target="_blank" class="social-icon" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4" style="font-family:'Outfit'">Quick Links</h4>
+                    <ul class="space-y-3 text-sm" style="color:var(--fg-secondary);list-style:none;">
+                        <li><a href="#" onclick="navigate('menu');return false" class="footer-link">Menu</a></li>
+                        <li><a href="#" onclick="state.user?navigate('orders'):openAuthModal();return false" class="footer-link">My Orders</a></li>
+                        <li><a href="#" onclick="navigate('about');return false" class="footer-link">About Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4" style="font-family:'Outfit'">Contact</h4>
+                    <ul class="space-y-3 text-sm" style="color:var(--fg-secondary);list-style:none;">
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-location-dot w-4" style="color:var(--accent)"></i> Phnom Penh, Cambodia</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-phone w-4" style="color:var(--accent)"></i> +855 16 992 144</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-envelope w-4" style="color:var(--accent)"></i> hello@vee_zee.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-12 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs" style="border-top:1px solid var(--border);color:var(--muted)">
+                <p>&copy; 2026 Vee_Zee. All rights reserved.</p>
+                <p>Crafted with <i class="fa-solid fa-heart" style="color:var(--accent)"></i> in Cambodia</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Admin Nav -->
+    <div class="mobile-admin-nav" id="mobile-admin-nav" style="display:none;">
+        <button class="admin-nav-item" onclick="navigate('admin')">
+            <i class="fa-solid fa-chart-line"></i><span class="text-xs">Dashboard</span>
+        </button>
+        <button class="admin-nav-item" onclick="navigate('admin-menu')">
+            <i class="fa-solid fa-utensils"></i><span class="text-xs">Menu</span>
+        </button>
+        <button class="admin-nav-item" onclick="navigate('admin-orders')">
+            <i class="fa-solid fa-clipboard-list"></i><span class="text-xs">Orders</span>
+        </button>
+        <button class="admin-nav-item" onclick="navigate('menu')">
+            <i class="fa-solid fa-store"></i><span class="text-xs">Store</span>
+        </button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/app.js"></script>
+        <!-- Facebook JS SDK -->
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '1696765278132927', // ប្តូរដោយ App ID របស់អ្នកដែលទាញពី Step 1
+          cookie     : true,
+          xfbml      : true,
+          version    : 'v18.0'
+        });
+      };
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
+
+</body>
+</html>
