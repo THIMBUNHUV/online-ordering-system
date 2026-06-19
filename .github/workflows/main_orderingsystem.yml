@@ -67,6 +67,17 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2328CCAEFF3A4584847A971E77E63090 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7FD87F8318714F629D92BD38A3433E4D }}
 
+      - name: Ensure web app is running
+        env:
+          WEBAPP_NAME: orderingSystem
+        run: |
+          RESOURCE_GROUP=$(az webapp list --query "[?name=='${WEBAPP_NAME}'].resourceGroup | [0]" -o tsv)
+          if [ -z "$RESOURCE_GROUP" ]; then
+            echo "Could not determine resource group for ${WEBAPP_NAME}"
+            exit 1
+          fi
+          az webapp start --name "$WEBAPP_NAME" --resource-group "$RESOURCE_GROUP"
+ 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
