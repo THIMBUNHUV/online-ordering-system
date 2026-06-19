@@ -7,7 +7,7 @@ name: Build and deploy Python app to Azure Web App - orderingSystem
 on:
   push:
     branches:
-      - main
+      - copilot/fix-deploy-job-failure
   workflow_dispatch:
 
 jobs:
@@ -63,21 +63,10 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_3A40C616D8D3440C89DAAD10A403CA49 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2328CCAEFF3A4584847A971E77E63090 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7FD87F8318714F629D92BD38A3433E4D }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E7A6D27D455641E1B7FD4C84C52D24E4 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0CFE1E9757C14905A0B3FE1FB572A384 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_41F04F7B99F14C2989A88A3B1AB34DEE }}
 
-      - name: Ensure web app is running
-        env:
-          WEBAPP_NAME: orderingSystem
-        run: |
-          RESOURCE_GROUP=$(az resource list --name "${WEBAPP_NAME}" --resource-type "Microsoft.Web/sites" --query "[0].resourceGroup" -o tsv)
-          if [ -z "$RESOURCE_GROUP" ]; then
-            echo "Could not determine resource group for ${WEBAPP_NAME}. Verify the web app exists and the workflow identity can read Azure resources."
-            exit 1
-          fi
-          az webapp start --name "$WEBAPP_NAME" --resource-group "$RESOURCE_GROUP"
- 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
